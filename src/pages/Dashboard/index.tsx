@@ -27,7 +27,8 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      // TODO LOAD FOODS
+      const response = await api.get('/foods');
+      setFoods(response.data);
     }
 
     loadFoods();
@@ -37,20 +38,32 @@ const Dashboard: React.FC = () => {
     food: Omit<IFoodPlate, 'id' | 'available'>,
   ): Promise<void> {
     try {
-      // TODO ADD A NEW FOOD PLATE TO THE API
+      const response = await api.post('foods', food);
+      setFoods([...foods, response.data]);
     } catch (err) {
       console.log(err);
     }
   }
+  async function updateFood(food: IFoodPlate): Promise<void> {
+    try {
+      await api.put(`foods/${food.id}`, food);
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
   async function handleUpdateFood(
-    food: Omit<IFoodPlate, 'id' | 'available'>,
+    food: Omit<IFoodPlate, 'available'>,
   ): Promise<void> {
-    // TODO UPDATE A FOOD PLATE ON THE API
+    const selected = foods.find(item => item.id === editingFood.id);
+    Object.assign(selected, { ...food });
+    if (selected) await updateFood(selected);
   }
 
   async function handleDeleteFood(id: number): Promise<void> {
-    // TODO DELETE A FOOD PLATE FROM THE API
+    await api.delete(`foods/${id}`);
+    const filtredFoods = foods.filter(food => food.id !== id);
+    setFoods(filtredFoods);
   }
 
   function toggleModal(): void {
@@ -62,7 +75,13 @@ const Dashboard: React.FC = () => {
   }
 
   function handleEditFood(food: IFoodPlate): void {
-    // TODO SET THE CURRENT EDITING FOOD ID IN THE STATE
+    setEditingFood(food);
+    toggleEditModal();
+  }
+
+  async function handleSetAvailable(food: IFoodPlate): Promise<void> {
+    console.log('handleSetAvailable', food);
+    updateFood(food);
   }
 
   return (
@@ -88,6 +107,7 @@ const Dashboard: React.FC = () => {
               food={food}
               handleDelete={handleDeleteFood}
               handleEditFood={handleEditFood}
+              handleSetAvailable={handleSetAvailable}
             />
           ))}
       </FoodsContainer>
